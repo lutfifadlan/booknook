@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Include Tailwind CSS (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Login</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="bg-blue-100 border-t border-b border-blue-500 text-blue-700 px-4 py-3 mb-4" role="alert">
+                    <p>{{ messages[0] }}</p>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="post" action="{{ url_for('login') }}">
+            {{ form.hidden_tag() }}
+            
+            <label for="email" class="block text-sm font-medium text-gray-700">Email:</label>
+            <input type="text" id="email" name="email" class="mt-1 p-2 border rounded w-full" required>
+            
+            <label for="password" class="block mt-2 text-sm font-medium text-gray-700">Password:</label>
+            <input type="password" id="password" name="password" class="mt-1 p-2 border rounded w-full" required>
+
+            <button type="submit" class="mt-2 bg-blue-500 text-white p-2 rounded">Login</button>
+        </form>
+    </div>
+
+</body>
+</html>

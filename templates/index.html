@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Include Tailwind CSS (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookshelf</title>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-4">Bookshelf</h1>
+
+        <ul class="list-disc pl-4">
+            {% for book in books %}
+                <li class="mb-2">{{ book.title }} by {{ book.author }}</li>
+            {% endfor %}
+        </ul>
+
+        <form class="mt-4" method="post" action="{{ url_for('add_book') }}">
+            <label for="title" class="block text-sm font-medium text-gray-700">Title:</label>
+            <input type="text" id="title" name="title" class="mt-1 p-2 border rounded w-full" required>
+            
+            <label for="author" class="block mt-2 text-sm font-medium text-gray-700">Author:</label>
+            <input type="text" id="author" name="author" class="mt-1 p-2 border rounded w-full" required>
+
+            <button type="submit" class="mt-2 bg-blue-500 text-white p-2 rounded">Add Book</button>
+        </form>
+    </div>
+
+</body>
+</html>
