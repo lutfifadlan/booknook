@@ -1,76 +1,93 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_bcrypt import Bcrypt
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Length
+from wtforms import StringField, PasswordField, validators
+from flask_bcrypt import Bcrypt
+from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['MONGO_URI'] = 'your_mongodb_uri'
+app.config['SECRET_KEY'] = 'sprm7B6hLM'
 bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
 login_manager.login_view = 'login'
-mongo = MongoClient(app.config['MONGO_URI'])
-db = mongo.get_database('bookshelf')
+
+client = MongoClient('mongodb+srv://prod-read-write:7FSfayMKn0HUEvAY@tryout.qidzm.mongodb.net/?retryWrites=true&w=majority')
+db = client['booknook']
 
 class User(UserMixin):
-    def __init__(self, username, email, password):
+    def __init__(self, username):
         self.username = username
-        self.email = email
-        self.password = password
-        self.books = []
-
-class Book:
-    def __init__(self, title, author):
-        self.title = title
-        self.author = author
+    def get_id(self):
+        return (self.username)
+    def is_authenticated(self):
+        return True
 
 @login_manager.user_loader
-def load_user(user_id):
-    user_data = db.users.find_one({"_id": user_id})
-    if user_data:
-        return User(username=user_data['username'], email=user_data['email'], password=user_data['password'])
-    return None
+def load_user(username):
+    return User(username)
+
+class RegistrationForm(FlaskForm):
+    username = StringField('Username', [validators.Length(min=4, max=25)])
+    password = PasswordField('Password', [
+        validators.DataRequired(),
+        validators.EqualTo('confirm_password', message='Passwords must match')
+    ])
+    confirm_password = PasswordField('Confirm Password')
 
 @app.route('/')
-@login_required
 def index():
-    user_data = db.users.find_one({"_id": current_user.get_id()})
-    books = user_data.get('books', [])
+    books = db.books.find()
     return render_template('index.html', books=books)
 
 @app.route('/add_book', methods=['POST'])
 @login_required
 def add_book():
-    title = request.form['title']
-    author = request.form['author']
-    
-    new_book = Book(title=title, author=author)
-    db.users.update_one({"_id": current_user.get_id()}, {"$push": {"books": {"title": title, "author": author}}})
+    title = request.form.get('title')
+    author = request.form.get('author')
+    rating = int(request.form.get('rating'))
+
+    db.books.insert_one({'title': title, 'author': author, 'rating': rating})
 
     return redirect(url_for('index'))
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        db.users.insert_one({'username': form.username.data, 'password': hashed_password})
+        flash('Your account has been created!', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user_data = db.users.find_one({"email": form.email.data})
-        if user_data and bcrypt.check_password_hash(user_data['password'], form.password.data):
-            user = User(username=user_data['username'], email=user_data['email'], password=user_data['password'])
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user_data = db.users.find_one({'username': username})
+
+        if user_data and bcrypt.check_password_hash(user_data['password'], password):
+            user = User(username)
             login_user(user)
             flash('Login successful!', 'success')
+            print('Login successful!', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Login unsuccessful. Please check your email and password.', 'danger')
-    return render_template('login.html', form=form)
+            flash('Login unsuccessful. Please check your username and password.', 'danger')
+            print('Login unsuccessful. Please check your username and password.', 'danger')
+
+    return render_template('login.html')
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

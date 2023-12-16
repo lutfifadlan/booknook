@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+    <h1 class="text-3xl font-semibold mb-4">Register</h1>
+    <form action="/register" method="post" class="mb-4">
+        {{ form.hidden_tag() }}
+        <div class="mb-4">
+            <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+            {{ form.username(class="form-input w-full") }}
+        </div>
+        <div class="mb-4">
+            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+            {{ form.password(class="form-input w-full") }}
+        </div>
+        <div class="mb-4">
+            <label for="confirm_password" class="block text-gray-700 text-sm font-bold mb-2">Confirm Password:</label>
+            {{ form.confirm_password(class="form-input w-full") }}
+        </div>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Register</button>
+    </form>
+{% endblock %}
