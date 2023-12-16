@@ -4,6 +4,7 @@ from wtforms import StringField, PasswordField, validators
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient
+from bson import ObjectId
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'sprm7B6hLM'
@@ -20,8 +21,13 @@ class User(UserMixin):
         self.username = username
     def get_id(self):
         return (self.username)
-    def is_authenticated(self):
-        return True
+    # def is_authenticated(self):
+    #     return True
+
+class BookForm(FlaskForm):
+    title = StringField('Title', [validators.Length(min=1, max=100)])
+    author = StringField('Author', [validators.Length(min=1, max=100)])
+    rating = StringField('Rating', [validators.NumberRange(min=1, max=5)])
 
 @login_manager.user_loader
 def load_user(username):
@@ -49,6 +55,35 @@ def add_book():
 
     db.books.insert_one({'title': title, 'author': author, 'rating': rating})
 
+    return redirect(url_for('index'))
+
+@app.route('/edit_book/<string:book_id>', methods=['GET', 'POST'])
+@login_required
+def edit_book(book_id):
+    book = db.books.find_one({'_id': ObjectId(book_id)})
+
+    if not book:
+        flash('Book not found', 'danger')
+        return redirect(url_for('index'))
+
+    form = BookForm(request.form)
+
+    if request.method == 'POST' and form.validate():
+        title = form.title.data
+        author = form.author.data
+        rating = int(form.rating.data)
+
+        db.books.update_one({'_id': ObjectId(book_id)}, {'$set': {'title': title, 'author': author, 'rating': rating}})
+        flash('Book updated successfully', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('edit_book.html', form=form, book=book)
+
+@app.route('/delete_book/<string:book_id>', methods=['POST'])
+@login_required
+def delete_book(book_id):
+    db.books.delete_one({'_id': ObjectId(book_id)})
+    flash('Book deleted successfully', 'success')
     return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
