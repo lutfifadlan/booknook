@@ -5,15 +5,17 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient
 from bson import ObjectId
+import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'sprm7B6hLM'
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-client = MongoClient('mongodb+srv://prod-read-write:7FSfayMKn0HUEvAY@tryout.qidzm.mongodb.net/?retryWrites=true&w=majority')
+mongdb_creds = os.environ['MONGO_URI']
+client = MongoClient(mongdb_creds)
 db = client['booknook']
 
 class User(UserMixin):
