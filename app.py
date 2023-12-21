@@ -1,10 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, validators
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient
-from bson import ObjectId
+from bson import ObjectId, Regex
 import os
 
 app = Flask(__name__)
@@ -23,13 +23,12 @@ class User(UserMixin):
         self.username = username
     def get_id(self):
         return (self.username)
-    # def is_authenticated(self):
-    #     return True
 
 class BookForm(FlaskForm):
     title = StringField('Title', [validators.Length(min=1, max=100)])
     author = StringField('Author', [validators.Length(min=1, max=100)])
-    rating = StringField('Rating', [validators.NumberRange(min=1, max=5)])
+    rating = StringField('Rating', [validators.Length(min=1, max=1), validators.regexp(r'[1-5]', message='Rating must be between 1 and 5')])
+    current_read_page = StringField('Current Read Page', [validators.Length(min=1, max=5), validators.regexp(r'^[1-9]$', message='Current Read Page must be between 1 and 99999')])
 
 @login_manager.user_loader
 def load_user(username):
@@ -54,8 +53,9 @@ def add_book():
     title = request.form.get('title')
     author = request.form.get('author')
     rating = int(request.form.get('rating'))
+    current_read_page = int(request.form.get('current_read_page')) if request.form.get('current_read_page') else 0
 
-    db.books.insert_one({'title': title, 'author': author, 'rating': rating})
+    db.books.insert_one({'title': title, 'author': author, 'rating': rating, 'current_read_page': current_read_page})
 
     return redirect(url_for('index'))
 
@@ -70,14 +70,23 @@ def edit_book(book_id):
 
     form = BookForm(request.form)
 
-    if request.method == 'POST' and form.validate():
-        title = form.title.data
-        author = form.author.data
-        rating = int(form.rating.data)
+    if request.method == 'POST':
+        if form.validate():
+            title = form.title.data
+            author = form.author.data
+            rating = int(form.rating.data)
 
-        db.books.update_one({'_id': ObjectId(book_id)}, {'$set': {'title': title, 'author': author, 'rating': rating}})
-        flash('Book updated successfully', 'success')
-        return redirect(url_for('index'))
+            if form.current_read_page.data and type(form.current_read_page.data) == int:
+                current_read_page = int(form.current_read_page.data)
+            else:
+                current_read_page = 0
+
+            db.books.update_one({'_id': ObjectId(book_id)}, {'$set': {'title': title, 'author': author, 'rating': rating, 'current_read_page': current_read_page}})
+            flash('Book updated successfully', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Please check the form for errors', 'danger')
+            print(form.errors)
 
     return render_template('edit_book.html', form=form, book=book)
 
@@ -127,4 +136,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=False)

@@ -18,6 +18,10 @@
             <label for="rating" class="block text-gray-700 text-sm font-bold mb-2">Rating:</label>
             {{ form.rating(class="form-input w-full", value=book['rating']) }}
         </div>
+        <div class="mb-4">
+            <label for="current_read_page" class="block text-gray-700 text-sm font-bold mb-2">Current Read Page:</label>
+            {{ form.current_read_page(class="form-input w-full", value=book['current_read_page']) }}
+        </div>
         <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Book</button>
     </form>
     <form action="{{ url_for('delete_book', book_id=book['_id']) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this book?');">

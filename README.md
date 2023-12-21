@@ -19,3 +19,11 @@ This guide outlines the steps to deploy a Flask web application with a MongoDB b
 
 5. **Python and Pip:**
    - Ensure you have Python and Pip installed on your machine.
+
+## Running App Locally
+
+1. npm install
+2. npx tailwindcss -i ./static/styles.css -o ./static/main.css
+3. source venv/bin/activate
+4. flask run
+5. Open localhost:5000
