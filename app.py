@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient, errors
 from bson import ObjectId
+from langcodes import Language
 import os, requests
 
 app = Flask(__name__)
@@ -156,17 +157,32 @@ def logout():
 @app.route('/search_book', methods=['GET', 'POST'])
 def search_book():
     query = request.form.get('search_book_query')
-    params = {'q': query, 'key': GOOGLE_API_KEY}
+    params = {'q': query, 'key': GOOGLE_API_KEY, 'maxResults': 40}
     response = requests.get(GOOGLE_BASE_URL, params=params)
 
     if response.status_code == 200:
         data = response.json()
+
         books = []
         for item in data.get('items', []):
             volume_info = item.get('volumeInfo', {})
-            title = volume_info.get('title', 'Unknown Title')
-            authors = volume_info.get('authors', ['Unknown Author'])
-            books.append({'title': title, 'authors': ', '.join(authors)})
+            title = volume_info.get('title', '')
+            authors = volume_info.get('authors', [])
+            description = volume_info.get('description', '')
+            rating = volume_info.get('averageRating', 0)
+            published_date = volume_info.get('publishedDate', 'N/A')
+            page_count = volume_info.get('pageCount', 0)
+            iso_6391_language = volume_info.get('language', 'N/A')
+            language = Language.get(iso_6391_language).autonym() if iso_6391_language != 'N/A' else 'N/A'
+            books.append({
+                'title': title,
+                'authors': ', '.join(authors),
+                'description': description,
+                'rating': int(rating),
+                'published_date': published_date,
+                'page_count': int(page_count),
+                'language': language
+            })
         return render_template('search_book.html', books=books, search_book_query=query)
     else:
         return render_template('search_book.html')

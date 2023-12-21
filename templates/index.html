@@ -61,4 +61,7 @@
     {% if error %}
     <p style="color: red;">{{ error }}</p>
     {% endif %}
+    <div class="container mx-auto mt-10 text-center">
+        <a href="{{ url_for('search_book') }}" class="text-green-500 hover:underline">Search books here</a>
+    </div>
 {% endblock %}

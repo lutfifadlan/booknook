@@ -22,7 +22,7 @@ This guide outlines the steps to deploy a Flask web application with a MongoDB b
 
 ## Running App Locally
 
-1. npm install
-2. source venv/bin/activate
+1. source venv/bin/activate
+2. pip install -r requirements.txt
 3. flask run
 4. Open localhost:5000
