@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Book{% endblock %}
+
+{% block content %}
+<h1 class="flex text-3xl font-bold mb-4 mt-10 justify-center">Book Search</h1>
+<form action="{{ url_for('search_book') }}" method="post">
+    <div class="flex justify-center">
+        <input type="text" name="search_book_query" class="rounded-l-lg p-2 border-t mr-0 border-b border-l text-gray-800 border-gray-200 bg-white w-96" placeholder="Search for books by title or author...">
+        <button type="submit" class="px-8 rounded-r-lg bg-blue-500 text-white p-2 hover:bg-blue-700">Search</button>
+    </div>
+</form>
+{% if books %}
+    <h2 class="text-2xl font-bold mt-4 mb-2">Search Results for '{{ search_book_query }}'</h2>
+    <ul>
+        {% for book in books %}
+            <li class="mb-2">{{ book.title }} - {{ book.authors }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+{% if error %}
+<p style="color: red;">{{ error }}</p>
+{% endif %}
+{% endblock %}

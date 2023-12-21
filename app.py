@@ -5,7 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient, errors
 from bson import ObjectId
-import os
+import os, requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
@@ -17,6 +17,9 @@ login_manager.login_view = 'login'
 mongdb_creds = os.environ['MONGO_URI']
 client = MongoClient(mongdb_creds)
 db = client['booknook']
+
+GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
+GOOGLE_BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
 
 class User(UserMixin):
     def __init__(self, username):
@@ -150,5 +153,23 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/search_book', methods=['GET', 'POST'])
+def search_book():
+    query = request.form.get('search_book_query')
+    params = {'q': query, 'key': GOOGLE_API_KEY}
+    response = requests.get(GOOGLE_BASE_URL, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        books = []
+        for item in data.get('items', []):
+            volume_info = item.get('volumeInfo', {})
+            title = volume_info.get('title', 'Unknown Title')
+            authors = volume_info.get('authors', ['Unknown Author'])
+            books.append({'title': title, 'authors': ', '.join(authors)})
+        return render_template('search_book.html', books=books, search_book_query=query)
+    else:
+        return render_template('search_book.html')
+
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(host='0.0.0.0', port=80)
