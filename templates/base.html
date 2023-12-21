@@ -6,15 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Booknook{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> -->
     {% block styles %}{% endblock %}
 </head>
 <body class="font-sans bg-gray-100">
+    <div class="container ml-14 mb-4 mt-2">
+        <h1 class="text-4xl font-bold text-blue-500">Booknook</h1>
+    </div>
     <div class="container mx-auto">
         {% if current_user.is_authenticated %}
-            <div class="mb-4">
-                <span class="text-gray-700">Welcome, {{ current_user.username }}!</span>
-                <a href="{{ url_for('logout') }}" class="text-blue-500 ml-2">Logout</a>
+            <div class="flex mb-2">
+                <span class="text-gray-700 flex-auto text-lg">Hi, {{ current_user.username }}!</span>
+                <a href="{{ url_for('logout') }}" class="text-blue-500 ml-2 flex-auto text-right">Logout</a>
             </div>
         {% endif %}
     </div>

@@ -3,8 +3,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, validators
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
-from pymongo import MongoClient
-from bson import ObjectId, Regex
+from pymongo import MongoClient, errors
+from bson import ObjectId
 import os
 
 app = Flask(__name__)
@@ -44,8 +44,12 @@ class RegistrationForm(FlaskForm):
 
 @app.route('/')
 def index():
-    books = db.books.find()
-    return render_template('index.html', books=books)
+    if current_user.is_authenticated:
+        books = db.books.find()
+        user_books = [book for book in books if book['user_id'] == current_user.username]
+        return render_template('index.html', books=user_books)
+    else:
+        return render_template('index.html')
 
 @app.route('/add_book', methods=['POST'])
 @login_required
@@ -55,18 +59,23 @@ def add_book():
     rating = int(request.form.get('rating'))
     current_read_page = int(request.form.get('current_read_page')) if request.form.get('current_read_page') else 0
 
-    db.books.insert_one({'title': title, 'author': author, 'rating': rating, 'current_read_page': current_read_page})
+    db.books.insert_one({
+        'user_id': current_user.username,
+        'title': title,
+        'author': author,
+        'rating': rating,
+        'current_read_page': current_read_page
+    })
 
     return redirect(url_for('index'))
 
 @app.route('/edit_book/<string:book_id>', methods=['GET', 'POST'])
 @login_required
 def edit_book(book_id):
-    book = db.books.find_one({'_id': ObjectId(book_id)})
+    book = db.books.find_one({'_id': ObjectId(book_id), 'user_id': current_user.username })
 
     if not book:
-        flash('Book not found', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('index'), error='Book not found')
 
     form = BookForm(request.form)
 
@@ -82,11 +91,9 @@ def edit_book(book_id):
                 current_read_page = 0
 
             db.books.update_one({'_id': ObjectId(book_id)}, {'$set': {'title': title, 'author': author, 'rating': rating, 'current_read_page': current_read_page}})
-            flash('Book updated successfully', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Please check the form for errors', 'danger')
-            print(form.errors)
+            return redirect(url_for('index'), error=form.errors)
 
     return render_template('edit_book.html', form=form, book=book)
 
@@ -100,11 +107,22 @@ def delete_book(book_id):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
+
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        db.users.insert_one({'username': form.username.data, 'password': hashed_password})
-        flash('Your account has been created!', 'success')
-        return redirect(url_for('login'))
+        try:
+            db.users.insert_one({'username': form.username.data, 'password': hashed_password})
+        except errors.DuplicateKeyError:
+            error_message='Username already exists. Please choose another username.'
+            return render_template('register.html', form=form, error=error_message)
+        except:
+            error_message='Error when inserting user'
+            return render_template('register.html', form=form, error=error_message)
+
+        user = User(form.username.data)
+        login_user(user)
+        return redirect(url_for('index'))
+
     return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -120,12 +138,9 @@ def login():
         if user_data and bcrypt.check_password_hash(user_data['password'], password):
             user = User(username)
             login_user(user)
-            flash('Login successful!', 'success')
-            print('Login successful!', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Login unsuccessful. Please check your username and password.', 'danger')
-            print('Login unsuccessful. Please check your username and password.', 'danger')
+            return render_template('login.html', form=request.form, error='Login unsuccessful. Please check your username and password.')
 
     return render_template('login.html')
 

@@ -23,7 +23,6 @@ This guide outlines the steps to deploy a Flask web application with a MongoDB b
 ## Running App Locally
 
 1. npm install
-2. npx tailwindcss -i ./static/styles.css -o ./static/main.css
-3. source venv/bin/activate
-4. flask run
-5. Open localhost:5000
+2. source venv/bin/activate
+3. flask run
+4. Open localhost:5000
