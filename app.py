@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, validators
 from flask_bcrypt import Bcrypt
@@ -49,8 +49,7 @@ class RegistrationForm(FlaskForm):
 @app.route('/')
 def index():
     if current_user.is_authenticated:
-        books = db.books.find()
-        user_books = [book for book in books if book['user_id'] == current_user.username]
+        user_books = db.books.find({ 'user_id': current_user.username })
         return render_template('index.html', books=user_books)
     else:
         return render_template('index.html')
@@ -188,4 +187,7 @@ def search_book():
         return render_template('search_book.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=80)
+    if os.environ['FLASK_ENV'] == 'development':
+        app.run(debug=True)
+    else:
+        app.run(host='0.0.0.0', port=80)

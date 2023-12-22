@@ -26,3 +26,16 @@ This guide outlines the steps to deploy a Flask web application with a MongoDB b
 2. pip install -r requirements.txt
 3. flask run
 4. Open localhost:5000
+
+## Uninstall All Dependencies
+
+1. source venv/bin/activate
+2. pip freeze | xargs pip uninstall -y
+3. deactivate
+
+## Troubleshoot ModuleNotFoundError
+
+In the case of all dependencies are correctly installed but the app gets `ModuleNotFoundError`, do the following:
+
+1. Close all IDE and terminal
+2. Open IDE and terminal again

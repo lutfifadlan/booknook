@@ -4,10 +4,15 @@
 
 {% block content %}
 <h1 class="flex text-3xl font-bold mb-4 mt-10 justify-center">Book Search</h1>
-<form action="{{ url_for('search_book') }}" method="post">
+{% set dataSource = 'openLibrary' %}
+<form action="{{ url_for('search_book', data_source=dataSource) }}" method="post">
     <div class="flex justify-center">
         <input type="text" name="search_book_query" class="rounded-l-lg p-2 border-t mr-0 border-b border-l text-gray-800 border-gray-200 bg-white w-96" placeholder="Search for books by title or author...">
         <button type="submit" class="px-8 rounded-r-lg bg-blue-500 text-white p-2 hover:bg-blue-700">Search</button>
+        <select id="dataSource" name="dataSource" class="ml-2 p-2 border border-gray-300 rounded-l-lg rounded-r-lg">
+            <option value="openLibrary" {% if dataSource == 'openLibrary' %}selected{% endif %}>Open Library</option>
+            <option value="googleBooks" {% if dataSource == 'googleBooks' %}selected{% endif %}>Google Books</option>
+        </select>
     </div>
 </form>
 {% if books %}
