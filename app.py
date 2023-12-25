@@ -260,4 +260,4 @@ if __name__ == '__main__':
     if os.environ['FLASK_ENV'] == 'development':
         app.run(debug=True, host='127.0.0.1', port=8000)
     else:
-        app.run(host='0.0.0.0', port=80)
+        app.run()
