@@ -2,6 +2,8 @@
 
 This guide outlines the steps to deploy a Flask web application with a MongoDB backend on AWS Elastic Beanstalk.
 
+# Linux/MacOS
+
 ## Prerequisites
 
 1. **AWS Account:**
@@ -39,3 +41,18 @@ In the case of all dependencies are correctly installed but the app gets `Module
 
 1. Close all IDE and terminal
 2. Open IDE and terminal again
+
+# Windows
+
+## Prerequisites
+1. Install the most recent stable python version https://www.python.org/downloads/windows/
+2. python -m pip install --upgrade pip
+3. virtualenv venv
+4. set-executionpolicy remotesigned
+5. .\venv\Scripts\activate
+6. pip install -r requirements.txt
+
+## Troubleshoot ebcli
+
+### Uninstall ebcli from a specified python version
+py -3.12 -m pip uninstall awsebcli
