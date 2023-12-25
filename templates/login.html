@@ -3,19 +3,23 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
-    <h1 class="text-3xl font-semibold mb-4">Login</h1>
-    <form action="/login" method="post" class="mb-4">
-        <div class="mb-4">
-            <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
-            <input type="text" name="username" class="form-input w-full" required>
+    <div class="flex items-center justify-center py-6 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-xl font-bold text-gray-800 mb-4 text-center">Login to Your Account</h1>
+            <form action="/login" method="post">
+                <div class="mb-3">
+                    <label for="username" class="block text-gray-700 text-sm font-semibold mb-1">Username:</label>
+                    <input type="text" name="username" class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="block text-gray-700 text-sm font-semibold mb-1">Password:</label>
+                    <input type="password" name="password" class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Login</button>
+                {% if error %}
+                    <p class="text-red-500 text-sm text-center mt-3">{{ error }}</p>
+                {% endif %}
+            </form>
         </div>
-        <div class="mb-4">
-            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
-            <input type="password" name="password" class="form-input w-full" required>
-        </div>
-        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Login</button>
-    </form>
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
+    </div>
 {% endblock %}

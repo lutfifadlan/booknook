@@ -3,28 +3,85 @@
 {% block title %}Edit Book{% endblock %}
 
 {% block content %}
-    <h1 class="text-3xl font-semibold mb-4">Edit Book</h1>
-    <form action="{{ url_for('edit_book', book_id=book['_id']) }}" method="post" class="mb-4">
-        {{ form.hidden_tag() }}
-        <div class="mb-4">
-            <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title:</label>
-            {{ form.title(class="form-input w-full", value=book['title']) }}
-        </div>
-        <div class="mb-4">
-            <label for="author" class="block text-gray-700 text-sm font-bold mb-2">Author:</label>
-            {{ form.author(class="form-input w-full", value=book['author']) }}
-        </div>
-        <div class="mb-4">
-            <label for="rating" class="block text-gray-700 text-sm font-bold mb-2">Rating:</label>
-            {{ form.rating(class="form-input w-full", value=book['rating']) }}
-        </div>
-        <div class="mb-4">
-            <label for="current_read_page" class="block text-gray-700 text-sm font-bold mb-2">Current Read Page:</label>
-            {{ form.current_read_page(class="form-input w-full", value=book['current_read_page']) }}
-        </div>
-        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Update Book</button>
-    </form>
-    <form action="{{ url_for('delete_book', book_id=book['_id']) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this book?');">
-        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Delete Book</button>
-    </form>
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md mt-10">
+        <h1 class="text-3xl font-semibold text-gray-800 mb-6 text-center">Edit Book</h1>
+        <form action="{{ url_for('edit_book', book_id=book['_id']) }}" method="post" class="space-y-5">
+            {{ form.hidden_tag() }}
+            
+            <!-- Field for Title -->
+            <div>
+                <label for="title" class="block text-gray-700 font-medium mb-2">Title:</label>
+                {{ form.title(class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                {% if form.title.errors %}
+                    <ul class="text-red-600 text-sm mt-1">
+                        {% for error in form.title.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Field for Author -->
+            <div>
+                <label for="author" class="block text-gray-700 font-medium mb-2">Author:</label>
+                {{ form.author(class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                {% if form.author.errors %}
+                    <ul class="text-red-600 text-sm mt-1">
+                        {% for error in form.author.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Field for Rating -->
+            <div>
+                <label for="rating" class="block text-gray-700 font-medium mb-2">Rating:</label>
+                {{ form.rating(class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                {% if form.rating.errors %}
+                    <ul class="text-red-600 text-sm mt-1">
+                        {% for error in form.rating.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Field for Current Read Page -->
+            <div>
+                <label for="current_read_page" class="block text-gray-700 font-medium mb-2">Current Read Page:</label>
+                {{ form.current_read_page(class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                {% if form.current_read_page.errors %}
+                    <ul class="text-red-600 text-sm mt-1">
+                        {% for error in form.current_read_page.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+             <!-- Field for Total Book Page -->
+             <div>
+                <label for="total_page_count" class="block text-gray-700 font-medium mb-2">Total Book Page:</label>
+                {{ form.total_page_count(class="form-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500") }}
+                {% if form.total_page_count.errors %}
+                    <ul class="text-red-600 text-sm mt-1">
+                        {% for error in form.total_page_count.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="flex justify-between items-center">
+                <!-- Update Button -->
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md transition duration-300">Update Book</button>
+
+                <!-- Delete Button -->
+                <form action="{{ url_for('delete_book', book_id=book['_id']) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this book?');">
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-md transition duration-300">Delete Book</button>
+                </form>
+            </div>
+        </form>
+    </div>
 {% endblock %}

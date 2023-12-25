@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, validators
+from wtforms import StringField, IntegerField, SelectField, PasswordField
+from wtforms.validators import Length, NumberRange, Optional, DataRequired, EqualTo
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient, errors
@@ -32,20 +33,24 @@ class User(UserMixin):
         return (self.username)
 
 class BookForm(FlaskForm):
-    title = StringField('Title', [validators.Length(min=1, max=100)])
-    author = StringField('Author', [validators.Length(min=1, max=100)])
-    rating = StringField('Rating', [validators.Length(min=1, max=1), validators.regexp(r'[1-5]', message='Rating must be between 1 and 5')])
-    current_read_page = StringField('Current Read Page', [validators.Length(min=1, max=5), validators.regexp(r'^[1-9]$', message='Current Read Page must be between 1 and 99999')])
+    title = StringField('Title', validators=[Length(min=1, max=100)])
+    author = StringField('Author', validators=[Length(min=1, max=100)])
+
+    rating = SelectField('Rating',
+                            choices=[('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')],
+                            validators=[Optional()])
+
+    current_read_page = IntegerField('Current Read Page', validators=[NumberRange(min=1, max=99999, message='Current Read Page must be between 1 and 99999'), Optional()])
+    total_page_count = IntegerField('Total Book Page', validators=[NumberRange(min=1, max=99999, message='Total Book Page must be between 1 and 99999'), Optional()])
 
 @login_manager.user_loader
 def load_user(username):
     return User(username)
-
 class RegistrationForm(FlaskForm):
-    username = StringField('Username', [validators.Length(min=4, max=25)])
+    username = StringField('Username', validators=[Length(min=4, max=25)])
     password = PasswordField('Password', [
-        validators.DataRequired(),
-        validators.EqualTo('confirm_password', message='Passwords must match')
+        DataRequired(),
+        EqualTo('confirm_password', message='Passwords must match')
     ])
     confirm_password = PasswordField('Confirm Password')
 
@@ -65,7 +70,7 @@ with app.app_context():
 def index():
     if current_user.is_authenticated:
         user_books = db.books.find({ 'user_id': current_user.username })
-        return render_template('index.html', books=user_books)
+        return render_template('index.html', books=list(user_books))
     else:
         return render_template('index.html')
 
@@ -76,13 +81,15 @@ def add_book():
     author = request.form.get('author') if request.form.get('author') else ''
     rating = int(request.form.get('rating')) if request.form.get('rating') else 0
     current_read_page = int(request.form.get('current_read_page')) if request.form.get('current_read_page') else 0
+    total_page_count = int(request.form.get('total_page_count')) if request.form.get('total_page_count') else 0
 
     db.books.insert_one({
         'user_id': current_user.username,
         'title': title,
         'author': author,
         'rating': rating,
-        'current_read_page': current_read_page
+        'current_read_page': current_read_page,
+        'total_page_count': total_page_count
     })
 
     return redirect(url_for('index'))
@@ -90,28 +97,40 @@ def add_book():
 @app.route('/edit_book/<string:book_id>', methods=['GET', 'POST'])
 @login_required
 def edit_book(book_id):
-    book = db.books.find_one({'_id': ObjectId(book_id), 'user_id': current_user.username })
+    book = db.books.find_one({'_id': ObjectId(book_id), 'user_id': current_user.username})
 
     if not book:
-        return redirect(url_for('index'), error='Book not found')
+        flash('Book not found', 'error')
+        return redirect(url_for('index'))
 
-    form = BookForm(request.form)
+    form = BookForm(request.form, data=book)
 
-    if request.method == 'POST':
-        if form.validate():
-            title = form.title.data
-            author = form.author.data
-            rating = int(form.rating.data)
+    if request.method == 'POST' and form.validate_on_submit():
+        title = form.title.data
+        author = form.author.data
+        rating = int(form.rating.data)
+        current_read_page = int(form.current_read_page.data) if form.current_read_page.data else 0
+        total_page_count = int(form.total_page_count.data) if form.total_page_count.data else 0
 
-            if form.current_read_page.data and type(form.current_read_page.data) == int:
-                current_read_page = int(form.current_read_page.data)
-            else:
-                current_read_page = 0
+        db.books.update_one({
+            '_id': ObjectId(book_id)},
+            {
+                '$set': {
+                    'title': title,
+                    'author': author,
+                    'rating': rating,
+                    'current_read_page': current_read_page,
+                    'total_page_count': total_page_count
+                }
+            }
+        )
 
-            db.books.update_one({'_id': ObjectId(book_id)}, {'$set': {'title': title, 'author': author, 'rating': rating, 'current_read_page': current_read_page}})
-            return redirect(url_for('index'))
-        else:
-            return redirect(url_for('index'), error=form.errors)
+        flash('Book updated successfully', 'success')
+        return redirect(url_for('index'))
+    else:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{getattr(form, field).label.text}: {error}", 'error')
 
     return render_template('edit_book.html', form=form, book=book)
 
@@ -137,6 +156,7 @@ def register():
             error_message='Error when inserting user'
             return render_template('register.html', form=form, error=error_message)
 
+        flash('User registered successfully', 'success')
         user = User(form.username.data)
         login_user(user)
         return redirect(url_for('index'))
@@ -156,6 +176,7 @@ def login():
         if user_data and bcrypt.check_password_hash(user_data['password'], password):
             user = User(username)
             login_user(user)
+            flash('User login successfully', 'success')
             return redirect(url_for('index'))
         else:
             return render_template('login.html', form=request.form, error='Login unsuccessful. Please check your username and password.')
@@ -220,7 +241,7 @@ def search_open_library(query):
                 'description': description,
                 'rating': int(rating),
                 'published_date': published_date,
-                'page_count': int(page_count),
+                'total_page_count': int(page_count),
                 'language': language
             })
         return books
@@ -237,6 +258,7 @@ def search_google_books(query):
         books = []
         for item in data.get('items', []):
             volume_info = item.get('volumeInfo', {})
+            print('volume_info =', volume_info)
             title = volume_info.get('title', '')
             authors = volume_info.get('authors', [])
             description = volume_info.get('description', '')
@@ -251,7 +273,7 @@ def search_google_books(query):
                 'description': description,
                 'rating': int(rating),
                 'published_date': published_date,
-                'page_count': int(page_count),
+                'total_page_count': int(page_count),
                 'language': language
             })
         return books
