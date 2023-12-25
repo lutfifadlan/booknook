@@ -1,10 +1,11 @@
 Flask==3.0.0
 Flask-Bcrypt==1.0.1
 Flask-WTF==1.2.1
-pymongo==4.6.1
+pymongo
 Flask-Login==0.6.3
 requests==2.31.0
 langcodes==3.3.0
 python-dotenv==1.0.0
-marisa-trie==1.1.0
+marisa-trie==0.7.8
+language-data==1.1
 bs4

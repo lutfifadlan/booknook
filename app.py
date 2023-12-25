@@ -69,12 +69,12 @@ def index():
     else:
         return render_template('index.html')
 
-@app.route('/add_book', methods=['POST'])
+@app.route('/add_book', methods=['POST', 'GET'])
 @login_required
 def add_book():
     title = request.form.get('title')
-    author = request.form.get('author')
-    rating = int(request.form.get('rating'))
+    author = request.form.get('author') if request.form.get('author') else ''
+    rating = int(request.form.get('rating')) if request.form.get('rating') else 0
     current_read_page = int(request.form.get('current_read_page')) if request.form.get('current_read_page') else 0
 
     db.books.insert_one({
@@ -176,8 +176,10 @@ def search_book():
 
         if data_source == 'googleBooks':
             books = search_google_books(query)
+            data_source = 'Google Books'
         elif data_source == 'openLibrary':
             books = search_open_library(query)
+            data_source = 'Open Library'
         else:
             # Handle invalid search source
             return render_template('search_book.html', error="Invalid search source")
