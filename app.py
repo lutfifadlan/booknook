@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pymongo import MongoClient, errors
 from bson import ObjectId
+from bs4 import BeautifulSoup
 from langcodes import Language
 import os, requests
 
@@ -18,9 +19,11 @@ login_manager.login_view = 'login'
 mongdb_creds = os.environ['MONGO_URI']
 client = MongoClient(mongdb_creds)
 db = client['booknook']
+language_codes = {}
 
 GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
 GOOGLE_BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
+OPEN_LIBRARY_API_URL = "https://openlibrary.org/search.json"
 
 class User(UserMixin):
     def __init__(self, username):
@@ -45,6 +48,18 @@ class RegistrationForm(FlaskForm):
         validators.EqualTo('confirm_password', message='Passwords must match')
     ])
     confirm_password = PasswordField('Confirm Password')
+
+with app.app_context():
+    url = "https://www.loc.gov/standards/iso639-2/php/code_list.php"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    for row in soup.find_all('tr')[1:]:
+        columns = row.find_all('td')
+        if len(columns) >= 5:
+            code = columns[0].text.strip()
+            name = columns[2].text.strip()
+            language_codes[code] = name
 
 @app.route('/')
 def index():
@@ -155,7 +170,62 @@ def logout():
 
 @app.route('/search_book', methods=['GET', 'POST'])
 def search_book():
-    query = request.form.get('search_book_query')
+    if request.method == 'POST':
+        query = request.form.get('search_book_query')
+        data_source = request.form.get('data_source', 'googleBooks')
+
+        if data_source == 'googleBooks':
+            books = search_google_books(query)
+        elif data_source == 'openLibrary':
+            books = search_open_library(query)
+        else:
+            # Handle invalid search source
+            return render_template('search_book.html', error="Invalid search source")
+
+        return render_template('search_book.html', books=books, search_book_query=query, data_source=data_source)
+    else:
+        return render_template('search_book.html')
+
+def search_open_library(query):
+    params = {'q': query, 'limit': 40}
+    response = requests.get(OPEN_LIBRARY_API_URL, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        books = []
+        for item in data.get('docs', []):
+            title = item.get('title', '')
+            authors = item.get('author_name', [])
+            description = ', '.join(item.get('first_sentence', '')) if isinstance(item.get('first_sentence'), list) else item.get('first_sentence', '')
+            rating = item.get('ratings_average', 0)
+            published_dates = item.get('publish_date', [])
+            published_date = ' - '.join(published_dates) if published_dates else 'N/A'
+            page_count = item.get('number_of_pages_median', 0)
+
+            languages_list = item.get('language', 'N/A')
+            language_names = []
+            for code in languages_list:
+                if code in language_codes:
+                    language_name = language_codes[code]
+                    language_name = language_name.replace(';', ' -')
+                    language_names.append(language_name)
+            language = ', '.join(language_names) if language_names else 'N/A'
+
+            books.append({
+                'title': title,
+                'authors': ', '.join(authors),
+                'description': description,
+                'rating': int(rating),
+                'published_date': published_date,
+                'page_count': int(page_count),
+                'language': language
+            })
+        return books
+    else:
+        return []
+
+def search_google_books(query):
     params = {'q': query, 'key': GOOGLE_API_KEY, 'maxResults': 40}
     response = requests.get(GOOGLE_BASE_URL, params=params)
 
@@ -182,9 +252,9 @@ def search_book():
                 'page_count': int(page_count),
                 'language': language
             })
-        return render_template('search_book.html', books=books, search_book_query=query)
+        return books
     else:
-        return render_template('search_book.html')
+        return []
 
 if __name__ == '__main__':
     if os.environ['FLASK_ENV'] == 'development':
