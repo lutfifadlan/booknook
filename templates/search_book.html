@@ -35,7 +35,7 @@
                         {% endfor %}
                     </div>
                 </div>
-                <form class="self-start p-2 ml-auto bg-green-500 text-white rounded-lg hover:bg-green-700" action="{{ url_for('add_book', title=book.title, authors=book.authors, rating=book.rating) }}">
+                <form class="self-start p-2 ml-auto bg-green-500 text-white rounded-lg hover:bg-green-700" action="{{ url_for('add_book', title=book.title, authors=book.authors, rating=book.rating) }}" method="post">
                     <button type="submit">Add</button>
                 </form>
             </div>
