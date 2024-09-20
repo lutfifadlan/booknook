@@ -7,7 +7,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage, FormDes
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
@@ -27,6 +27,7 @@ const formSchema = z.object({
 
 export default function Register() {
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -41,6 +42,8 @@ export default function Register() {
   })
 
   const onSubmit = async (values: { email: string; password: string; confirmPassword: string; agreeToTerms: boolean }) => {
+    const [isLoading, setIsLoading] = useState(false)
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -78,6 +81,8 @@ export default function Register() {
         description: "An unexpected error occurred. Please try again later.",
         duration: 5000,
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -165,8 +170,15 @@ export default function Register() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <Button type="submit" className="w-full">
-                Register
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Registering...
+                  </>
+                ) : (
+                  'Register'
+                )}
               </Button>
             </form>
           </Form>

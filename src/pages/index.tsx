@@ -62,7 +62,7 @@ export default function Home() {
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : error ? (
         <Alert variant="destructive">

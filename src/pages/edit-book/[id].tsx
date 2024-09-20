@@ -114,7 +114,7 @@ export default function EditBook() {
 
   if (isLoading) return (
     <div className="flex justify-center items-center h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      <Loader2 className="h-8 w-8 animate-spin" />
     </div>
   )
   if (error) return (
