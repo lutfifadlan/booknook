@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case 'GET':
       try {
         const user = await prisma.user.findUnique({
-          where: { email: session.user.email },
+          where: { email: session.user?.email as string },
           select: { id: true }
         })
 
@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         const { title, author, rating, currentReadPage, totalPageCount } = req.body
         const user = await prisma.user.findUnique({
-          where: { email: session.user.email },
+          where: { email: session.user?.email as string },
           select: { id: true }
         })
     

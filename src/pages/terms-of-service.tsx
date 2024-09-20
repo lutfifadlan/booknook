@@ -23,7 +23,7 @@ const TermsOfService = () => {
       <p className="mb-4">The content, organization, graphics, design, and other matters related to the application are protected under applicable copyrights and other proprietary laws.</p>
       
       <h2 className="text-xl font-semibold mb-2">6. Disclaimer of Warranties</h2>
-      <p className="mb-4">Our application is provided "as is" without any warranties, expressed or implied.</p>
+      <p className="mb-4">Our application is provided &quot;as is&quot; without any warranties, expressed or implied.</p>
       
       <h2 className="text-xl font-semibold mb-2">7. Limitation of Liability</h2>
       <p className="mb-4">We shall not be liable for any indirect, incidental, special, consequential or punitive damages resulting from your use of or inability to use the application.</p>
