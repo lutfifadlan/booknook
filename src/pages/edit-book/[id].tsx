@@ -3,7 +3,11 @@ import { useRouter } from 'next/router'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Loader2, Save, Trash2 } from 'lucide-react'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { useToast } from '@/hooks/use-toast'
 
 async function getBook(id: string) {
   const res = await fetch(`/api/books/${id}`)
@@ -31,12 +35,14 @@ export default function EditBook() {
   const router = useRouter()
   const { id } = router.query
   const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [rating, setRating] = useState(0)
   const [currentReadPage, setCurrentReadPage] = useState(0)
   const [totalPageCount, setTotalPageCount] = useState(0)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const { data: book, isLoading, error } = useQuery(['book', id], () => getBook(id as string), {
     enabled: !!id,
@@ -52,17 +58,45 @@ export default function EditBook() {
     }
   }, [book])
 
-  const updateMutation = useMutation((bookData: { title: string; author: string; rating: number; currentReadPage: number; totalPageCount: number }) => updateBook(id as string, bookData), {
-    onSuccess: () => {
-      queryClient.invalidateQueries(['book', id])
-      router.push('/')
-    },
-  })
+  const updateMutation = useMutation(
+    (bookData: { title: string; author: string; rating: number; currentReadPage: number; totalPageCount: number }) => 
+      updateBook(id as string, bookData),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['book', id])
+        toast({
+          title: "Book updated",
+          description: "Your changes have been saved successfully.",
+          variant: "default",
+        })
+        router.push('/')
+      },
+      onError: () => {
+        toast({
+          title: "Update failed",
+          description: "There was an error updating the book. Please try again.",
+          variant: "destructive",
+        })
+      },
+    }
+  )
 
   const deleteMutation = useMutation(() => deleteBook(id as string), {
     onSuccess: () => {
       queryClient.invalidateQueries('books')
+      toast({
+        title: "Book deleted",
+        description: "The book has been removed from your collection.",
+        variant: "default",
+      })
       router.push('/')
+    },
+    onError: () => {
+      toast({
+        title: "Delete failed",
+        description: "There was an error deleting the book. Please try again.",
+        variant: "destructive",
+      })
     },
   })
 
@@ -72,50 +106,54 @@ export default function EditBook() {
   }
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this book?')) {
-      deleteMutation.mutate()
-    }
+    setIsDeleteDialogOpen(false)
+    deleteMutation.mutate()
   }
 
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <div>An error occurred: {(error as Error).message}</div>
+  if (isLoading) return (
+    <div className="flex justify-center items-center h-screen">
+      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+    </div>
+  )
+  if (error) return (
+    <div className="text-center text-red-500 mt-8">
+      An error occurred: {(error as Error).message}
+    </div>
+  )
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <Card>
+    <div className="max-w-2xl mx-auto mt-8 p-4">
+      <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Edit Book</CardTitle>
+          <CardTitle className="text-2xl font-bold">Edit Book</CardTitle>
+          <CardDescription>Update the details of your book</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Title
-              </label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
-            <div>
-              <label htmlFor="author" className="block text-sm font-medium text-gray-700">
-                Author
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="author">Author</Label>
               <Input
                 id="author"
                 type="text"
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
-            <div>
-              <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
-                Rating
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="rating">Rating</Label>
               <Input
                 id="rating"
                 type="number"
@@ -124,12 +162,11 @@ export default function EditBook() {
                 value={rating}
                 onChange={(e) => setRating(parseInt(e.target.value))}
                 required
+                className="w-full"
               />
             </div>
-            <div>
-              <label htmlFor="currentReadPage" className="block text-sm font-medium text-gray-700">
-                Current Read Page
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="currentReadPage">Current Read Page</Label>
               <Input
                 id="currentReadPage"
                 type="number"
@@ -137,12 +174,11 @@ export default function EditBook() {
                 value={currentReadPage}
                 onChange={(e) => setCurrentReadPage(parseInt(e.target.value))}
                 required
+                className="w-full"
               />
             </div>
-            <div>
-              <label htmlFor="totalPageCount" className="block text-sm font-medium text-gray-700">
-                Total Page Count
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="totalPageCount">Total Page Count</Label>
               <Input
                 id="totalPageCount"
                 type="number"
@@ -150,17 +186,42 @@ export default function EditBook() {
                 value={totalPageCount}
                 onChange={(e) => setTotalPageCount(parseInt(e.target.value))}
                 required
+                className="w-full"
               />
             </div>
-            <div className="flex justify-between">
-              <Button type="submit">Update Book</Button>
-              <Button type="button" variant="destructive" onClick={handleDelete}>
-                Delete Book
+            <div className="flex justify-between pt-4">
+              <Button type="submit" disabled={updateMutation.isLoading} className="w-32">
+                {updateMutation.isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" /> Save
+                  </>
+                )}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(true)} className="w-32">
+                <Trash2 className="mr-2 h-4 w-4" /> Delete
               </Button>
             </div>
           </form>
         </CardContent>
       </Card>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this book?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the book
+              &quot;{title}&quot; from your collection.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

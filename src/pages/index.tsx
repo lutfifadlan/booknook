@@ -5,6 +5,7 @@ import BookCard from '@/components/BookCard'
 import Link from 'next/link'
 import { PlusCircle, Search, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useEffect, useState } from 'react'
 
 interface Book {
   id: string;
@@ -24,6 +25,18 @@ async function getBooks(): Promise<Book[]> {
 export default function Home() {
   const { data: session } = useSession()
   const { data: books, isLoading, error } = useQuery<Book[]>('books', getBooks)
+  const [localBooks, setLocalBooks] = useState<Book[]>([])
+
+  useEffect(() => {
+    if (books) {
+      setLocalBooks(books)
+    }
+  }, [books])
+
+
+  const handleDelete = (deletedId: string) => {
+    setLocalBooks(prevBooks => prevBooks.filter(book => book.id !== deletedId))
+  }
 
   if (!session) {
     return (
@@ -59,10 +72,10 @@ export default function Home() {
             Failed to fetch books. Please try again later.
           </AlertDescription>
         </Alert>
-      ) : books && books.length > 0 ? (
+      ) : localBooks && localBooks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {books.map((book: Book) => (
-            <BookCard key={book.id} {...book} />
+          {localBooks.map((book: Book) => (
+            <BookCard key={book.id} {...book} onDelete={handleDelete} />
           ))}
         </div>
       ) : (

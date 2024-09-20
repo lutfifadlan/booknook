@@ -23,9 +23,10 @@ interface BookProps {
   rating: number
   currentReadPage: number
   totalPageCount: number
+  onDelete: (id: string) => void
 }
 
-export default function BookCard({ id, title, author, rating, currentReadPage, totalPageCount }: BookProps) {
+export default function BookCard({ id, title, author, rating, currentReadPage, totalPageCount, onDelete }: BookProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const { toast } = useToast()
 
@@ -41,6 +42,7 @@ export default function BookCard({ id, title, author, rating, currentReadPage, t
         variant: "default",
         className: "bg-white text-black dark:bg-gray-900 dark:text-white",
       })
+      onDelete(id)
       // You might want to trigger a refetch of the books list here
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
@@ -89,14 +91,14 @@ export default function BookCard({ id, title, author, rating, currentReadPage, t
               <Edit className="mr-2 h-4 w-4" /> Edit
             </Button>
           </Link>
-          <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
+          <Button variant="outline" onClick={() => setIsDeleteDialogOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" /> Delete
           </Button>
         </div>
       </CardContent>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white text-black dark:bg-gray-900 dark:text-white">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this book?</AlertDialogTitle>
             <AlertDialogDescription>
