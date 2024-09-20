@@ -71,7 +71,7 @@ export default function Register() {
         })
       }
     } catch (err) {
-      setError('An unexpected error occurred')
+      setError(`An unexpected error occurred: ${(err as Error).message}`)
       toast({
         variant: "destructive",
         title: "Error",
