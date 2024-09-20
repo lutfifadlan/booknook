@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2 } from 'lucide-react'
+import { useToast } from "@/hooks/use-toast"
 
 interface BookData {
   title: string
@@ -41,10 +42,25 @@ export default function AddBook() {
   const [totalPageCount, setTotalPageCount] = useState(10)
   const router = useRouter()
   const { data: session, status } = useSession()
+  const { toast } = useToast()
 
   const mutation = useMutation(addBook, {
     onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Book added successfully!",
+        className: "bg-white text-black dark:bg-gray-900 dark:text-white",
+        duration: 3000,
+      })
       router.push('/')
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add book",
+        variant: "destructive",
+        duration: 3000,
+      })
     },
   })
 

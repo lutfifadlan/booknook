@@ -68,15 +68,16 @@ export default function EditBook() {
           title: "Book updated",
           description: "Your changes have been saved successfully.",
           variant: "default",
-          className: "bg-white text-black dark:bg-gray-900 dark:text-white",
+          duration: 3000,
         })
-        router.push('/')
+        setTimeout(() => router.push('/'), 100)
       },
       onError: () => {
         toast({
           title: "Update failed",
           description: "There was an error updating the book. Please try again.",
           variant: "destructive",
+          duration: 3000,
         })
       },
     }
@@ -90,7 +91,7 @@ export default function EditBook() {
         description: "The book has been removed from your collection.",
         variant: "default",
       })
-      router.push('/')
+      setTimeout(() => router.push('/'), 100)
     },
     onError: () => {
       toast({

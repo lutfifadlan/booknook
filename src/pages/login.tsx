@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { FcGoogle } from 'react-icons/fc'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function Login() {
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const router = useRouter()
@@ -18,13 +19,13 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const result = await signIn('credentials', {
-      username,
+      email,
       password,
       redirect: false,
     })
 
     if (result && result.error) {
-      setError('Invalid username or password')
+      setError('Invalid email or password')
     } else {
       router.push('/')
     }
@@ -46,12 +47,12 @@ export default function Login() {
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -86,6 +87,14 @@ export default function Login() {
             Sign in with Google
           </Button>
         </CardContent>
+        <CardFooter>
+          <p className="text-sm text-center w-full">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="text-primary hover:underline">
+              Register here
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   )

@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery } from 'react-query'
 import { Star, Search, Loader2, BookPlus } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
-import { Toaster } from "@/components/ui/toaster"
 import {
   Pagination,
   PaginationContent,
@@ -46,6 +45,7 @@ export default function SearchBook() {
   const { toast } = useToast()
   const [totalPages, setTotalPages] = useState(0)
   const [hasSearched, setHasSearched] = useState(false)
+  const [addingBookId, setAddingBookId] = useState<string | null>(null)
 
   const { data, refetch, isLoading, error } = useQuery<SearchResponse>(
     ['searchBooks', query, dataSource, page],
@@ -71,6 +71,7 @@ export default function SearchBook() {
         title: "Search query is empty",
         description: "Please enter a search term",
         variant: "destructive",
+        duration: 3000,
       })
       return
     }
@@ -80,6 +81,7 @@ export default function SearchBook() {
   }
 
   const handleAddBook = async (book: Book) => {
+    setAddingBookId(book.title) // Use book title as a unique identifier
     try {
       const response = await fetch('/api/books', {
         method: 'POST',
@@ -98,6 +100,7 @@ export default function SearchBook() {
         description: `"${book.title}" has been added to your collection`,
         variant: "default",
         className: "bg-white text-black dark:bg-gray-900 dark:text-white",
+        duration: 3000,
       })
     } catch (error) {
       console.error('Error adding book:', error)
@@ -106,7 +109,10 @@ export default function SearchBook() {
         description: "An error occurred while adding the book",
         variant: "destructive",
         className: "bg-white text-black dark:bg-gray-900 dark:text-white",
+        duration: 3000,
       })
+    } finally {
+      setAddingBookId(null)
     }
   }
 
@@ -236,10 +242,18 @@ export default function SearchBook() {
                     <p className="text-sm text-gray-600">Pages: {book.pageCount}</p>
                     <p className="text-sm text-gray-600">Language: {book.language}</p>
                   </div>
-                  <Button onClick={() => handleAddBook(book)} className="mt-4 w-full">
+                  <Button 
+                    onClick={() => handleAddBook(book)} 
+                    className="mt-4 w-full"
+                    disabled={addingBookId === book.title}
+                  >
                     <div className="flex items-center justify-center">
-                      <BookPlus className="mr-2 h-4 w-4" />
-                      Add to My Books
+                      {addingBookId === book.title ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <BookPlus className="mr-2 h-4 w-4" />
+                      )}
+                      {addingBookId === book.title ? 'Adding...' : 'Add to My Books'}
                     </div>
                   </Button>
                 </CardContent>
@@ -267,7 +281,6 @@ export default function SearchBook() {
           )}
         </>
       )}
-      <Toaster />
     </div>
   )
 }

@@ -18,20 +18,20 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },  
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) {
+        if (!credentials?.email || !credentials?.password) {
           return null
         }
         const user = await prisma.user.findUnique({
-          where: { username: credentials.username }
+          where: { email: credentials.email }
         })
         if (!user || !await bcrypt.compare(credentials.password, user.password as string)) {
           return null
         }
-        return { id: user.id, username: user.username }
+        return { id: user.id, email: user.email }
       }
     })
   ],
@@ -68,41 +68,28 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (existingUser) {
-          // If the user exists but doesn't have a linked Google account
-          if (!existingUser.accounts.some((acc: { provider: string }) => acc.provider === 'google')) {
-            await prisma.account.create({
-              data: {
-                userId: existingUser.id,
-                type: account.type,
-                provider: account.provider,
-                providerAccountId: account.providerAccountId,
-                access_token: account.access_token,
-                expires_at: account.expires_at,
-                token_type: account.token_type,
-                scope: account.scope,
-                id_token: account.id_token,
-                session_state: account.session_state,
-              },
-            })
-          }
           return true
         } else {
-          // If the user doesn't exist, create a new user
-          const baseUsername = user.email?.split('@')[0] ?? ''
-          let username = baseUsername
-          let count = 1
-
-          while (await prisma.user.findUnique({ where: { username } })) {
-            username = `${baseUsername}${count}`
-            count++
-          }
-
-          await prisma.user.create({
+          const newUser = await prisma.user.create({
             data: {
               name: user.name ?? undefined,
               email: user.email ?? undefined,
               image: user.image ?? undefined,
-              username: username,
+            },
+          })
+
+          await prisma.account.create({
+            data: {
+              userId: newUser.id.toString(),
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+              session_state: account.session_state,
             },
           })
         }

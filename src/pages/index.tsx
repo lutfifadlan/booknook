@@ -33,7 +33,6 @@ export default function Home() {
     }
   }, [books])
 
-
   const handleDelete = (deletedId: string) => {
     setLocalBooks(prevBooks => prevBooks.filter(book => book.id !== deletedId))
   }
