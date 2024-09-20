@@ -42,8 +42,6 @@ export default function Register() {
   })
 
   const onSubmit = async (values: { email: string; password: string; confirmPassword: string; agreeToTerms: boolean }) => {
-    const [isLoading, setIsLoading] = useState(false)
-
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
