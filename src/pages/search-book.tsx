@@ -89,7 +89,7 @@ export default function SearchBook() {
           author: book.authors.join(', '),
           rating: book.rating,
           totalPageCount: book.pageCount,
-          currentReadPage: 0
+          currentReadPage: 1
         }),
       })
       if (!response.ok) throw new Error('Failed to add book')
@@ -182,8 +182,8 @@ export default function SearchBook() {
             <SelectValue placeholder="Select data source" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="googleBooks">Google Books</SelectItem>
-            <SelectItem value="openLibrary">Open Library</SelectItem>
+            <SelectItem value="googleBooks" className="cursor-pointer">Google Books</SelectItem>
+            <SelectItem value="openLibrary" className="cursor-pointer">Open Library</SelectItem>
           </SelectContent>
         </Select>
         <Button type="submit" className="w-full md:w-auto">

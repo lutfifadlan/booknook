@@ -68,6 +68,7 @@ export default function EditBook() {
           title: "Book updated",
           description: "Your changes have been saved successfully.",
           variant: "default",
+          className: "bg-white text-black dark:bg-gray-900 dark:text-white",
         })
         router.push('/')
       },

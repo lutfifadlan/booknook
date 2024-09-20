@@ -44,10 +44,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               © {new Date().getFullYear()} Booknook. All rights reserved.
             </p>
             <nav className="flex space-x-4">
-              <Link href="/privacy" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <Link href="/privacy-policy" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+              <Link href="/terms-of-service" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
                 Terms of Service
               </Link>
             </nav>
