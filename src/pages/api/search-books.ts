@@ -32,31 +32,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { query, dataSource } = req.query
+  const { query, dataSource, page = '1', pageSize = '10' } = req.query
 
   try {
-    let books
+    let result
     if (dataSource === 'googleBooks') {
-      books = await searchGoogleBooks(query as string)
+      result = await searchGoogleBooks(query as string, Number(page), Number(pageSize))
     } else if (dataSource === 'openLibrary') {
-      books = await searchOpenLibrary(query as string)
+      result = await searchOpenLibrary(query as string, Number(page), Number(pageSize))
     } else {
       return res.status(400).json({ error: 'Invalid data source' })
     }
 
-    res.status(200).json(books)
+    res.status(200).json(result)
   } catch (error) {
     console.error('Search error:', error)
     res.status(500).json({ error: 'Error searching books' })
   }
 }
 
-async function searchGoogleBooks(query: string) {
+async function searchGoogleBooks(query: string, page: number, pageSize: number) {
+  const startIndex = (page - 1) * pageSize
   const response = await axios.get(GOOGLE_BOOKS_API_URL, {
-    params: { q: query, key: GOOGLE_API_KEY }
+    params: { 
+      q: query, 
+      key: GOOGLE_API_KEY,
+      startIndex,
+      maxResults: pageSize
+    }
   })
 
-  return response.data.items.map((item: Book) => ({
+  const books = response.data.items?.map((item: Book) => ({
     title: item.volumeInfo.title,
     authors: item.volumeInfo.authors || [],
     description: item.volumeInfo.description || '',
@@ -64,15 +70,24 @@ async function searchGoogleBooks(query: string) {
     publishedDate: item.volumeInfo.publishedDate || 'N/A',
     pageCount: item.volumeInfo.pageCount || 0,
     language: item.volumeInfo.language || 'N/A'
-  }))
+  })) || []
+
+  return {
+    books,
+    totalItems: response.data.totalItems
+  }
 }
 
-async function searchOpenLibrary(query: string) {
+async function searchOpenLibrary(query: string, page: number, pageSize: number) {
   const response = await axios.get(OPEN_LIBRARY_API_URL, {
-    params: { q: query }
+    params: { 
+      q: query,
+      page,
+      limit: pageSize
+    }
   })
 
-  return response.data.docs.map((item: OpenLibraryItem) => ({
+  const books = response.data.docs.map((item: OpenLibraryItem) => ({
     title: item.title,
     authors: item.author_name || [],
     description: item.first_sentence || '',
@@ -81,4 +96,9 @@ async function searchOpenLibrary(query: string) {
     pageCount: item.number_of_pages_median || 0,
     language: item.language ? item.language[0] : 'N/A'
   }))
+
+  return {
+    books,
+    totalItems: response.data.numFound
+  }
 }

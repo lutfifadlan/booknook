@@ -7,6 +7,15 @@ import { useQuery } from 'react-query'
 import { Star, Search, Loader2, BookPlus } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { Toaster } from "@/components/ui/toaster"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 interface Book {
   title: string
@@ -18,8 +27,13 @@ interface Book {
   language: string
 }
 
-async function searchBooks(query: string, dataSource: string) {
-  const res = await fetch(`/api/search-books?query=${query}&dataSource=${dataSource}`)
+interface SearchResponse {
+  books: Book[]
+  totalItems: number
+}
+
+async function searchBooks(query: string, dataSource: string, page: number, pageSize: number) {
+  const res = await fetch(`/api/search-books?query=${query}&dataSource=${dataSource}&page=${page}&pageSize=${pageSize}`)
   if (!res.ok) throw new Error('Failed to fetch books')
   return res.json()
 }
@@ -27,11 +41,27 @@ async function searchBooks(query: string, dataSource: string) {
 export default function SearchBook() {
   const [query, setQuery] = useState('')
   const [dataSource, setDataSource] = useState('googleBooks')
+  const [page, setPage] = useState(1)
+  const pageSize = 9 // Number of items per page
   const { toast } = useToast()
-  const { data: books, refetch, isLoading, error } = useQuery<Book[]>(
-    ['searchBooks', query, dataSource],
-    () => searchBooks(query, dataSource),
-    { enabled: false }
+  const [totalPages, setTotalPages] = useState(0)
+  const [hasSearched, setHasSearched] = useState(false)
+
+  const { data, refetch, isLoading, error } = useQuery<SearchResponse>(
+    ['searchBooks', query, dataSource, page],
+    () => searchBooks(query, dataSource, page, pageSize),
+    { 
+      enabled: false,
+      onSuccess: (data) => {
+        const newTotalPages = Math.max(1, Math.ceil(data.totalItems / pageSize))
+        setTotalPages(newTotalPages)
+        if (data.books.length === 0 && page > 1) {
+          // If current page is empty and it's not the first page, go to the first page
+          setPage(1)
+          refetch()
+        }
+      }
+    }
   )
 
   const handleSearch = (e: React.FormEvent) => {
@@ -44,6 +74,8 @@ export default function SearchBook() {
       })
       return
     }
+    setPage(1) // Reset to first page on new search
+    setHasSearched(true)
     refetch()
   }
 
@@ -76,6 +108,62 @@ export default function SearchBook() {
         className: "bg-white text-black dark:bg-gray-900 dark:text-white",
       })
     }
+  }
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
+      setPage(newPage)
+      refetch()
+    }
+  }
+
+  const renderPageNumbers = () => {
+    const pages = []
+    const maxVisiblePages = 5
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      const leftOffset = Math.max(1, page - Math.floor(maxVisiblePages / 2))
+      const rightOffset = Math.min(totalPages, leftOffset + maxVisiblePages - 1)
+
+      if (leftOffset > 1) {
+        pages.push(1)
+        if (leftOffset > 2) pages.push('ellipsis')
+      }
+
+      for (let i = leftOffset; i <= rightOffset; i++) {
+        pages.push(i)
+      }
+
+      if (rightOffset < totalPages) {
+        if (rightOffset < totalPages - 1) pages.push('ellipsis')
+        pages.push(totalPages)
+      }
+    }
+
+    return pages.map((pageNum, index) => {
+      if (pageNum === 'ellipsis') {
+        return (
+          <PaginationItem key={`ellipsis-${index}`}>
+            <PaginationEllipsis />
+          </PaginationItem>
+        )
+      }
+      return (
+        <PaginationItem key={pageNum}>
+          <PaginationLink 
+            onClick={() => handlePageChange(pageNum as number)}
+            isActive={page === pageNum}
+            className={`cursor-pointer ${page === pageNum ? 'pointer-events-none' : ''}`}
+          >
+            {pageNum}
+          </PaginationLink>
+        </PaginationItem>
+      )
+    })
   }
 
   return (
@@ -114,47 +202,70 @@ export default function SearchBook() {
         </div>
       )}
 
-      { error ? (
+      {error ? (
         <p className="text-center text-red-500 mb-8">An error occurred: {(error as Error).message}</p>
       ) : <div/>}
 
-      {!isLoading && books && books.length === 0 && (
-        <p className="text-center text-gray-500 mb-8">No books found. Try a different search term.</p>
+      {!isLoading && hasSearched && (!data || data.books.length === 0) && (
+        <p className="text-center text-gray-500 mb-8">No books found. Try a different search term or page.</p>
       )}
 
-      {books && books.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {books.map((book, index) => (
-            <Card key={index} className="flex flex-col h-full">
-              <CardHeader>
-                <CardTitle className="line-clamp-2">{book.title}</CardTitle>
-                <p className="text-sm text-gray-500">{book.authors.join(', ')}</p>
-              </CardHeader>
-              <CardContent className="flex-grow flex flex-col justify-between">
-                <div>
-                  <p className="text-sm mb-2 line-clamp-3">{book.description}</p>
-                  <div className="flex items-center mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${i < Math.round(book.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
-                        fill={i < Math.round(book.rating) ? 'currentColor' : 'none'}
-                      />
-                    ))}
-                    <span className="ml-2 text-sm text-gray-600">{book.rating.toFixed(1)}</span>
+      {data && data.books.length > 0 && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {data.books.map((book, index) => (
+              <Card key={index} className="flex flex-col h-full">
+                <CardHeader>
+                  <CardTitle className="line-clamp-2">{book.title}</CardTitle>
+                  <p className="text-sm text-gray-500">{book.authors.join(', ')}</p>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col justify-between">
+                  <div>
+                    <p className="text-sm mb-2 line-clamp-3">{book.description}</p>
+                    <div className="flex items-center mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${i < Math.round(book.rating) ? 'text-yellow-400' : 'text-gray-300'}`}
+                          fill={i < Math.round(book.rating) ? 'currentColor' : 'none'}
+                        />
+                      ))}
+                      <span className="ml-2 text-sm text-gray-600">{book.rating.toFixed(1)}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">Published: {book.publishedDate}</p>
+                    <p className="text-sm text-gray-600">Pages: {book.pageCount}</p>
+                    <p className="text-sm text-gray-600">Language: {book.language}</p>
                   </div>
-                  <p className="text-sm text-gray-600">Published: {book.publishedDate}</p>
-                  <p className="text-sm text-gray-600">Pages: {book.pageCount}</p>
-                  <p className="text-sm text-gray-600">Language: {book.language}</p>
-                </div>
-                <Button onClick={() => handleAddBook(book)} className="mt-4 w-full">
-                  <BookPlus className="mr-2 h-4 w-4" />
-                  Add to My Books
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  <Button onClick={() => handleAddBook(book)} className="mt-4 w-full">
+                    <div className="flex items-center justify-center">
+                      <BookPlus className="mr-2 h-4 w-4" />
+                      Add to My Books
+                    </div>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(page - 1)}
+                    className={page === 1 ? 'cursor-not-allowed opacity-50 pointer-events-none' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+                {renderPageNumbers()}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(page + 1)}
+                    className={page === totalPages ? 'cursor-not-allowed opacity-50 pointer-events-none' : 'cursor-pointer'}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </>
       )}
       <Toaster />
     </div>
