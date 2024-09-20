@@ -3,6 +3,8 @@ import { useQuery } from 'react-query'
 import { Button } from '@/components/ui/button'
 import BookCard from '@/components/BookCard'
 import Link from 'next/link'
+import { PlusCircle, Search, Loader2 } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface Book {
   id: string;
@@ -25,41 +27,60 @@ export default function Home() {
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-3xl font-bold mb-4">Welcome to Booknook</h1>
-        <p className="mb-4">Please login to use Booknook.</p>
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)]">
+        <h1 className="text-4xl font-bold mb-4 text-black dark:text-white">Welcome to Booknook</h1>
+        <p className="mb-8 text-gray-600 dark:text-gray-300">Your personal library management system</p>
         <Link href="/login" passHref>
-          <Button>Login</Button>
+          <Button size="lg">Login to Get Started</Button>
         </Link>
       </div>
     )
   }
 
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <div>An error occurred: {(error as Error).message}</div>
-
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Your Books</h1>
-      {books && books.length > 0 ? (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Your Books</h1>
+        <Link href="/add-book" passHref>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Book
+          </Button>
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        </div>
+      ) : error ? (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to fetch books. Please try again later.
+          </AlertDescription>
+        </Alert>
+      ) : books && books.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {books.map((book: Book) => (
             <BookCard key={book.id} {...book} />
           ))}
         </div>
       ) : (
-        <p>No books added yet.</p>
+        <Alert>
+          <AlertTitle>No books found</AlertTitle>
+          <AlertDescription>
+            You haven&apos;t added any books yet. Click the Add Book button to get started.
+          </AlertDescription>
+        </Alert>
       )}
-      <div className="mt-8">
-        <Link href="/add-book" passHref>
-          <Button>Add Book</Button>
-        </Link>
-      </div>
-      <div className="mt-10 text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Find Your Next Read</h2>
-        <p className="text-gray-600 mb-6">Explore our vast collection of books and find your next favorite.</p>
-        <Link href="/search-book" passHref>
-          <Button>Search Books</Button>
+
+      <div className="mt-16 text-center">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Find Your Next Read</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">Explore our vast collection of books and find your next favorite.</p>
+        <Link href="/search-book" passHref className="mb-6">
+          <Button size="lg">
+            <Search className="mr-2 h-5 w-5" /> Search Books
+          </Button>
         </Link>
       </div>
     </div>

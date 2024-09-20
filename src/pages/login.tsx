@@ -3,7 +3,11 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Separator } from '@/components/ui/separator'
+import { FcGoogle } from 'react-icons/fc'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -26,18 +30,23 @@ export default function Login() {
     }
   }
 
+  const handleGoogleSignIn = () => {
+    signIn('google', { callbackUrl: '/' })
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Login to Your Account</CardTitle>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Login to Booknook</CardTitle>
+          <CardDescription className="text-center">
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 type="text"
@@ -46,10 +55,8 @@ export default function Login() {
                 required
               />
             </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -58,11 +65,26 @@ export default function Login() {
                 required
               />
             </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <Button type="submit" className="w-full">
               Login
             </Button>
           </form>
+          
+          <div className="flex items-center space-x-2">
+            <Separator className="flex-1" />
+              <p className="px-2 text-sm text-muted-foreground">Or</p>
+            <Separator className="flex-1" />
+          </div>
+          
+          <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
+            <FcGoogle className="w-5 h-5 mr-2" />
+            Sign in with Google
+          </Button>
         </CardContent>
       </Card>
     </div>
